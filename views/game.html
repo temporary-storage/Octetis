@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <meta name="description" content="" />
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script type="text/javascript" src="/js/prettify.js"></script>                                   <!-- PRETTIFY -->
+    <script type="text/javascript" src="/js/kickstart.js"></script>                                  <!-- KICKSTART -->
+    <link rel="stylesheet" type="text/css" href="/css/kickstart.css" media="all" />                  <!-- KICKSTART -->
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="all" />                          <!-- CUSTOM STYLES -->
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        $(function(){
+            var iosocket = io.connect(document.URL),
+            inContainer = $('#SocketMessageContainer'),
+            outInput = $('#SocketMessageInput'),
+            fieldBlock = true;
+
+            var currentMarker = null;
+            iosocket.on('connect', function () {
+                inContainer.append($('<li>Connected</li>'));
+
+                iosocket.on('message', function(message) {
+                    inContainer.append($('<li></li>').text(message));
+                });
+                iosocket.on('disconnect', function() {
+                    inContainer.append('<li>Disconnected</li>');
+                });
+
+
+                iosocket.on('checkMarker', function(markerType) {
+
+                    inContainer.append('<li>marker '+markerType+' is taken by opponent </li>');
+                    currentMarker = $('.MarkerSingle[markerType!="'+markerType+'"]');
+                    console.log(currentMarker);
+                    inContainer.append($('<li>Start</li>'));
+                    iosocket.send('Start');
+                    finishMarkerCheck();
+
+                });
+
+            });
+            function finishMarkerCheck(){
+                $('.MarkerContainer').html('&nbsp;');
+                fieldBlock = false;
+            }
+            // field interaction
+            $('.Field td').live('click',function(e){
+                if (!fieldBlock && $(this).html == '&nbsp;'){ // if field not blocked
+                    $(this).html(currentMarker);
+                    fieldBlock = true;
+                    // todo enable ability marker on the other side
+                }
+            })
+            $('.MarkerSingle').live('click',function(){
+                var markerType = $(this).attr('markerType');
+                currentMarker = $(this);
+                iosocket.emit('checkMarker',{type : markerType});
+                finishMarkerCheck()
+            })
+
+            outInput.keypress(function(event) {
+                if(event.which == 13) {
+                    event.preventDefault();
+                    iosocket.send(outInput.val());
+                    inContainer.append($('<li></li>').text(outInput.val()));
+                    outInput.val('');
+                }
+            });
+
+        });
+    </script>
+        <style>
+            td {
+                border: 1px dotted #696969;
+                height: 70px;
+                width: 50px
+            }
+            table{
+                border: 1px dotted #696969;
+            }
+
+        </style>
+
+</head><body><a id="top-of-page"></a><div id="wrap" class="clearfix">
+    <!-- ===================================== END HEADER ===================================== -->
+
+
+    <div class="col_12">
+        <div class="col_3 MarkerContainer">
+            please check
+            <hr>
+
+            <span class="icon x-large blue MarkerSingle" data-icon="-" markerType="minus"></span>
+            <span class="icon x-large blue MarkerSingle" data-icon="+" markerType="plus"></span>
+        </div>
+        <div class="col_6">
+
+            <table class="Field">
+                <tr>
+                    <td nid="1">&nbsp;</td>
+                    <td nid="2">&nbsp;</td>
+                    <td nid="3">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td nid="8">&nbsp;</td>
+                    <td nid="9">&nbsp;</td>
+                    <td nid="4">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td nid="7">&nbsp;</td>
+                    <td nid="6">&nbsp;</td>
+                    <td nid="5">&nbsp;</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col_3">
+            <h6>Stream</h6>
+
+
+            <input type="text" id="SocketMessageInput">
+
+            <ul id="SocketMessageContainer" class="checks">
+            </ul>
+            <!--
+            <h6>Sample Icons</h6>
+            <span class="icon social x-large blue" data-icon="F"></span>
+            <span class="icon social x-large" style="color:orange;" data-icon="5"></span>
+            <span class="icon social x-large darkgray" data-icon="1"></span>
+            <span class="icon social x-large black" data-icon="w"></span>
+            <span class="icon x-large pink" data-icon="*"></span>
+            <span class="icon social x-large green" data-icon="v"></span>
+
+            <h6>Button w/Icon</h6>
+            <a class="button orange small" href="#"><span class="icon social" data-icon="r"></span> RSS</a>
+            -->
+        </div>
+
+    </div>
+
+    <!-- ===================================== START FOOTER ===================================== -->
+    <div class="clear"></div>
+    <div id="footer">
+        &copy; Copyright 2011–2012 All Rights Reserved. This website was built with <a href="http://www.99lime.com">HTML KickStart</a>
+        <a id="link-top" href="#top-of-page">Top</a>
+    </div>
+
+</div><!-- END WRAP -->
+</body>
+</html>
